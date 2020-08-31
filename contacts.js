@@ -12,7 +12,7 @@ function listContacts() {
     if (err) {
       return console.log(err);
     }
-    return data;
+   console.table(JSON.parse(data));
   });
 }
 
@@ -25,7 +25,7 @@ function getContactById(contactId) {
     const arrayWithFilteredContact = JSON.parse(data).filter(
       (contact) => contact.id === contactId
     );
-    return (filteredContacts = arrayWithFilteredContact[0]);
+    return console.log((filteredContacts = arrayWithFilteredContact[0]));
   });
 }
 
