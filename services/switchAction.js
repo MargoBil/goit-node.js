@@ -1,8 +1,7 @@
-const contacts = require('./contacts');
-const argv = require('yargs').argv;
+const contacts = require('../src/contacts');
 const {listContacts, getContactById, addContact, removeContact} = contacts;
 
-function invokeAction({action, id, name, email, phone}) {
+const switchAction = (action, id, name, email, phone) => {
   switch (action) {
     case 'list':
       listContacts();
@@ -23,6 +22,6 @@ function invokeAction({action, id, name, email, phone}) {
     default:
       console.warn('\x1B[31m Unknown action type!');
   }
-}
+};
 
-invokeAction(argv);
+module.exports = switchAction;
