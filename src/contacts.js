@@ -1,5 +1,7 @@
 const fs = require('fs');
 const path = require('path');
+const contactModel = require('./contacts.model.js');
+
 
 const contactsPath = path.join(
   path.dirname('./db/contacts.json'),
@@ -46,23 +48,30 @@ function removeContact(contactId) {
   return idForDelete;
 }
 
-function addContact({name, email, phone}) {
-  const contacts = fs.readFileSync(contactsPath, err => {
-    if (err) {
-      console.log(err);
-    }
-  });
-  const parseData = JSON.parse(contacts);
-  const newId = Math.max(...parseData.map(contact => contact.id)) + 1;
-  const newContact = [{id: newId, name, email, phone}];
-  const updatedContacts = [...parseData, ...newContact];
-  const updatedContactJson = JSON.stringify(updatedContacts);
-  fs.writeFileSync(contactsPath, updatedContactJson, err => {
-    if (err) {
-      console.log(err);
-    }
-  });
-  return newContact[0];
+async function addContact(bodyChunk) {
+  try {
+    const newContact = await contactModel.create(bodyChunk);
+    return newContact;
+  } catch (error) {
+    console.log(error);
+  }
+
+  // const contacts = fs.readFileSync(contactsPath, err => {
+  //   if (err) {
+  //     console.log(err);
+  //   }
+  // });
+  // const parseData = JSON.parse(contacts);
+  // const newId = Math.max(...parseData.map(contact => contact.id)) + 1;
+  // const newContact = [{id: newId, name, email, phone}];
+  // const updatedContacts = [...parseData, ...newContact];
+  // const updatedContactJson = JSON.stringify(updatedContacts);
+  // fs.writeFileSync(contactsPath, updatedContactJson, err => {
+  //   if (err) {
+  //     console.log(err);
+  //   }
+  // });
+  // return newContact[0];
 }
 
 function updateContact(contactId, bodyChunk) {

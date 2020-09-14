@@ -24,9 +24,13 @@ class ContactsController {
     return res.status(200).json(data);
   }
 
-  postContact(req, res, next) {
-    const data = addContact(req.body);
+ async postContact(req, res, next) {
+   try {
+    const data = await addContact(req.body);
     return res.status(201).json(data);
+   } catch (error) {
+     console.log(error);
+   }
   }
 
   deleteContactById(req, res, next) {
@@ -50,6 +54,9 @@ class ContactsController {
       name: Joi.string().required(),
       email: Joi.string().required(),
       phone: Joi.string().required(),
+      subscription: Joi.string().required(),
+      password: Joi.string().required(),
+      token: Joi.string().allow('')
     });
     const validResult = postContactsRules.validate(req.body);
     if (validResult.error) {
