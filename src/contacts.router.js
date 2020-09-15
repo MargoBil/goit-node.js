@@ -1,5 +1,5 @@
 const {Router} = require('express');
-const {getContacts, findContactById, postContact, validatePostNewContact, validatePatchNewContact, deleteContactById, updateContactById} = require('./contacts.controller');
+const {getContacts, findContactById, postContact, deleteContactById, updateContactById, validateId, validatePostNewContact, validatePatchNewContact, } = require('./contacts.controller');
 
 const contactsRouter = Router();
 
@@ -10,13 +10,13 @@ contactsRouter.get("/", getContacts);
 contactsRouter.post("/", validatePostNewContact, postContact);
 
 //get contact by id:
-contactsRouter.get("/:contactId", findContactById);
+contactsRouter.get("/:contactId", validateId, findContactById);
 
 //update contact by id:
-contactsRouter.patch("/:contactId", validatePatchNewContact, updateContactById);
+contactsRouter.patch("/:contactId", validateId, validatePatchNewContact, updateContactById);
 
 //delete contact by id:
-contactsRouter.delete("/:contactId", deleteContactById);
+contactsRouter.delete("/:contactId", validateId, deleteContactById);
 
 
 module.exports = contactsRouter;

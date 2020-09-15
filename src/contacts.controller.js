@@ -1,52 +1,85 @@
 const Joi = require('joi');
 const {
+  Types: {ObjectId},
+} = require('mongoose');
+const {
   listContacts,
   getContactById,
   addContact,
   removeContact,
   updateContact,
 } = require('./contacts');
+const contactModel = require('./contacts.model');
 
 class ContactsController {
-  getContacts(req, res, next) {
-    const data = listContacts();
-    if (!data) {
-      return res.status(404).json({message: 'Not Found'});
+  async getContacts(req, res, next) {
+    try {
+      const data = await listContacts();
+      if (!data) {
+        return res.status(404).json({message: 'Not Found'});
+      }
+      return res.status(200).json(data);
+    } catch (error) {
+      next(error);
     }
-    return res.status(200).json(data);
   }
 
-  findContactById(req, res, next) {
-    const data = getContactById(req.params.contactId);
-    if (!data) {
-      return res.status(404).json({message: 'Not Found'});
+  async findContactById(req, res, next) {
+    try {
+      const id = ObjectId(req.params.contactId);
+      const data = await getContactById(id);
+      if (!data) {
+        return res.status(404).json({message: 'Not Found'});
+      }
+      return res.status(200).json(data);
+    } catch (error) {
+      next(error);
     }
-    return res.status(200).json(data);
   }
 
- async postContact(req, res, next) {
+  async postContact(req, res, next) {
+    try {
+      const data = await addContact(req.body);
+      return res.status(201).json(data);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async deleteContactById(req, res, next) {
+    try {
+      const id = ObjectId(req.params.contactId);
+      const data = await removeContact(id);
+      if (!data) {
+        return res.status(404).json({message: 'Not Found'});
+      }
+      return res.status(200).json({message: 'contact deleted'});
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateContactById(req, res, next) {
    try {
-    const data = await addContact(req.body);
-    return res.status(201).json(data);
+    const id = ObjectId(req.params.contactId);
+    const data = await updateContact({_id: id}, req.body);
+    if (!data) {
+      return res.status(404).json({message: 'Not Found'});
+    }
+    return res.status(200).json(data);
    } catch (error) {
-     console.log(error);
+     next(error);
    }
   }
 
-  deleteContactById(req, res, next) {
-    const data = removeContact(req.params.contactId);
-    if (!data) {
-      return res.status(404).json({message: 'Not Found'});
+  validateId(req, res, next) {
+    const { contactId } = req.params;
+  
+    if (!ObjectId.isValid(contactId)) {
+      return res.status(400).send("This  id does not exist");
     }
-    return res.status(200).json({message: 'contact deleted'});
-  }
 
-  updateContactById(req, res, next) {
-    const data = updateContact(req.params.contactId, req.body);
-    if (!data) {
-      return res.status(404).json({message: 'Not Found'});
-    }
-    return res.status(200).json(data);
+    next();
   }
 
   validatePostNewContact(req, res, next) {
@@ -56,7 +89,7 @@ class ContactsController {
       phone: Joi.string().required(),
       subscription: Joi.string().required(),
       password: Joi.string().required(),
-      token: Joi.string().allow('')
+      token: Joi.string().allow(''),
     });
     const validResult = postContactsRules.validate(req.body);
     if (validResult.error) {
@@ -70,6 +103,9 @@ class ContactsController {
       name: Joi.string(),
       email: Joi.string(),
       phone: Joi.string(),
+      subscription: Joi.string(),
+      password: Joi.string(),
+      token: Joi.string().allow(''),
     });
     const validResult = patchContactsRules.validate(req.body);
     const isResultEmpty = Object.keys(validResult.value).length === 0;

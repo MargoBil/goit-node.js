@@ -44,7 +44,7 @@ module.exports = class Server {
   async initDataBase() {
     try {
       const {MONGODB_URL} = process.env;
-      await mongoose.connect(MONGODB_URL, { useNewUrlParser: true, useUnifiedTopology: true});
+      await mongoose.connect(MONGODB_URL, { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: true});
       console.log('Database connection successful');
     } catch (error) {
       console.log(error);
