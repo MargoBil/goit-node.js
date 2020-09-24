@@ -9,7 +9,6 @@ const {
   removeContact,
   updateContact,
 } = require('./contacts');
-const contactModel = require('./contacts.model');
 
 class ContactsController {
   async getContacts(req, res, next) {
