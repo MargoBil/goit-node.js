@@ -1,4 +1,6 @@
 const Joi = require('joi');
+const contactModel = require('./contacts.model');
+
 const {
   Types: {ObjectId},
 } = require('mongoose');
@@ -8,12 +10,39 @@ const {
   addContact,
   removeContact,
   updateContact,
-} = require('./contacts');
+} = require('./contactsServises');
+const {object} = require('joi');
 
 class ContactsController {
   async getContacts(req, res, next) {
     try {
-      const data = await listContacts();
+      const {page, limit} = req.query;
+      const options = {page: page, limit: limit};
+      let data;
+      if (
+        Object.keys(req.query)[0] === 'page' &&
+        Object.keys(req.query)[1] === 'limit'
+      ) {
+        return contactModel.paginate({}, options, (err, result) => {
+          if (err) {
+            return console.log(err);
+          }
+          data = result.docs;
+          return res.status(200).json(data);
+        });
+      }
+      if (Object.keys(req.query)[0] === 'Sub') {
+        const query = Object.values(req.query)[0];
+        return contactModel.find({subscription: query}, (err, result) => {
+          if (err) {
+            return console.log(err);
+          }
+          data = result;
+          return res.status(200).json(data);
+        });
+      }
+
+      data = await listContacts();
       if (!data) {
         return res.status(404).json({message: 'Not Found'});
       }
@@ -59,23 +88,23 @@ class ContactsController {
   }
 
   async updateContactById(req, res, next) {
-   try {
-    const id = ObjectId(req.params.contactId);
-    const data = await updateContact({_id: id}, req.body);
-    if (!data) {
-      return res.status(404).json({message: 'Not Found'});
+    try {
+      const id = ObjectId(req.params.contactId);
+      const data = await updateContact({_id: id}, req.body);
+      if (!data) {
+        return res.status(404).json({message: 'Not Found'});
+      }
+      return res.status(200).json(data);
+    } catch (error) {
+      next(error);
     }
-    return res.status(200).json(data);
-   } catch (error) {
-     next(error);
-   }
   }
 
   validateId(req, res, next) {
-    const { contactId } = req.params;
-  
+    const {contactId} = req.params;
+
     if (!ObjectId.isValid(contactId)) {
-      return res.status(400).send("This  id does not exist");
+      return res.status(400).send('This  id does not exist');
     }
 
     next();

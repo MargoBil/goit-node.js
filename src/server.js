@@ -1,7 +1,9 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
-const contactsRouter = require('./contacts.router');
+const contactsRouter = require('./contacts/contacts.router');
+const authRouter = require('./users/auth.router');
+const usersRouter = require('./users/users.router');
 const morgan = require('morgan');
 const mongoose = require('mongoose');
 
@@ -34,6 +36,8 @@ module.exports = class Server {
 
   initRoutes() {
     this.server.use('/api/contacts', contactsRouter);
+    this.server.use('/auth', authRouter);
+    this.server.use('/users', usersRouter);
   }
 
   startListening() {
@@ -44,7 +48,7 @@ module.exports = class Server {
   async initDataBase() {
     try {
       const {MONGODB_URL} = process.env;
-      await mongoose.connect(MONGODB_URL, { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: true});
+      await mongoose.connect(MONGODB_URL, { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: true, useCreateIndex: true});
       console.log('Database connection successful');
     } catch (error) {
       console.log(error);
