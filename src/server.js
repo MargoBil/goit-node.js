@@ -6,6 +6,8 @@ const authRouter = require('./users/auth.router');
 const usersRouter = require('./users/users.router');
 const morgan = require('morgan');
 const mongoose = require('mongoose');
+// const multer = require('multer');
+// const upload = multer({dest: 'public/'});
 
 module.exports = class Server {
   constructor() {
@@ -32,12 +34,22 @@ module.exports = class Server {
       }),
     );
     this.server.use(morgan('dev'));
+    this.server.use(express.static('./src/public'));
   }
 
   initRoutes() {
     this.server.use('/api/contacts', contactsRouter);
     this.server.use('/auth', authRouter);
     this.server.use('/users', usersRouter);
+  }
+
+  initDistributionStatic() {
+    this.server.post('/form-data', upload.single('avatar'), function (req, res, next) {
+      console.log(req.file);
+      console.log(req.body);
+      // req.file is the `avatar` file
+      // req.body will hold the text fields, if there were any
+    });
   }
 
   startListening() {
@@ -48,7 +60,12 @@ module.exports = class Server {
   async initDataBase() {
     try {
       const {MONGODB_URL} = process.env;
-      await mongoose.connect(MONGODB_URL, { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: true, useCreateIndex: true});
+      await mongoose.connect(MONGODB_URL, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        useFindAndModify: true,
+        useCreateIndex: true,
+      });
       console.log('Database connection successful');
     } catch (error) {
       console.log(error);

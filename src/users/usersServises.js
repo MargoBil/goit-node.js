@@ -1,20 +1,55 @@
 const userModel = require('./users.model');
 const bcryptjs = require('bcryptjs');
 const Jwt = require('jsonwebtoken');
+const AvatarGenerator = require('avatar-generator');
+const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 
 async function createNewUser(bodyChunk, costFactor) {
   try {
     const {password, email} = bodyChunk;
     const passwordHash = await bcryptjs.hash(password, costFactor);
+    const avatarFileName = await getUsersAvatar();
+    const avatarURL = createAvatarUrl(avatarFileName);
     const newUser = await userModel.create({
       email,
       password: passwordHash,
+      avatarURL: avatarURL,
     });
     return newUser;
   } catch (error) {
     console.log(error);
   }
+}
+async function getUsersAvatar() {
+  try {
+    const avatar = new AvatarGenerator({
+      parts: ['background', 'face', 'clothes', 'head', 'hair', 'eye', 'mouth'],
+      partsLocation: path.join(
+        __dirname,
+        '../../node_modules/avatar-generator/img',
+      ),
+      imageExtension: '.png',
+    });
+    const variant = 'female';
+    const fileName = `${Date.now()}.png`;
+    const image = await avatar.generate(fileName, variant);
+    await image.png().toFile(`./tmp/${fileName}`);
+    await fs.copyFileSync(
+      `./tmp/${fileName}`,
+      `./src/public/images/${fileName}`,
+    );
+    await fs.unlinkSync(`./tmp/${fileName}`);
+    return fileName;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+function createAvatarUrl(fileName) {
+  const avatarURL = `http://localhost:${process.env.PORT}/images/${fileName}`;
+  return avatarURL;
 }
 
 async function findeUserByEmail(bodyChunk) {
@@ -61,11 +96,11 @@ async function updateToken(user, token) {
   }
 }
 
-
 module.exports = {
   createNewUser,
   handleSignInReq,
   findeUserByEmail,
   createNewToken,
   updateToken,
+  createAvatarUrl
 };

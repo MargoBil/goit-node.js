@@ -5,12 +5,14 @@ const {
   createNewToken,
   updateToken,
   getCurrentUser,
+  createAvatarUrl,
 } = require('./usersServises');
 const Joi = require('joi');
 const Jwt = require('jsonwebtoken');
 const userModel = require('./users.model');
-const {json} = require('body-parser');
-const {options} = require('joi');
+var multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 
 class UsersController {
   constructor() {
@@ -24,15 +26,17 @@ class UsersController {
   async _signUp(req, res, next) {
     try {
       const newUser = await createNewUser(req.body, this._costFactor);
+
       if (!newUser) {
-        res.status(409).json({
+        return res.status(409).json({
           message: 'Email in use',
         });
       }
-      const {email, _id} = newUser;
-      res.status(201).json({
+      const {email, _id, avatarURL} = newUser;
+      return res.status(201).json({
         _id,
         email,
+        avatarURL,
       });
     } catch (error) {
       next(error);
@@ -91,6 +95,44 @@ class UsersController {
     } catch (error) {
       next(error);
     }
+  }
+
+  async updateAvatar(req, res, next) {
+    try {
+      const fileName = req.file.filename;
+      const originalAvatar = req.user.avatarURL;
+      const avatarURL = createAvatarUrl(fileName);
+      const data = await userModel.updateOne(
+        {avatarURL: req.user.avatarURL},
+        {avatarURL},
+        err => {
+          if (err) {
+            return console.log(err);
+          }
+        },
+      );
+      const {name, ext} = path.parse(originalAvatar);
+      const previousFileName = name + ext;
+      await fs.unlinkSync(`./src/public/images/${previousFileName}`);
+      if (!data) {
+        return res.status(401).json({message: 'Not authorized'});
+      }
+      return res.status(200).json({avatarURL});
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  upload() {
+    const storage = multer.diskStorage({
+      destination: './src/public/images',
+      filename: function (req, file, cb) {
+        const fileName = `${Date.now()}`;
+        const ext = path.parse(file.originalname).ext;
+        cb(null, fileName + ext);
+      },
+    });
+    return multer({storage});
   }
 
   validateReqBodyForAuth(req, res, next) {
