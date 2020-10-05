@@ -163,7 +163,6 @@ class UsersController {
       }
       req.user = user;
       req.token = token;
-
       next();
     } catch (error) {
       next(error);
