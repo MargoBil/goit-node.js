@@ -13,10 +13,21 @@ const userModel = require('./users.model');
 var multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const nodemailer = require('nodemailer');
 
 class UsersController {
   constructor() {
     this._costFactor = 4;
+    this.transport = nodemailer.createTransport({
+      service: 'Gmail',
+      auth: {
+        user: process.env.NODEMAILER_USER,
+        pass: process.env.NODEMAILER_PASS,
+      },
+      tls: {
+        rejectUnauthorized: false,
+      },
+    });
   }
 
   get signUp() {
@@ -32,12 +43,35 @@ class UsersController {
           message: 'Email in use',
         });
       }
-      const {email, _id, avatarURL} = newUser;
+      const {email, _id, avatarURL, verificationToken} = newUser;
+
+      const sendedEmail = await this.transport.sendMail({
+        from: process.env.NODEMAILER_USER,
+        to: email,
+        subject: 'Email verification',
+        html: `<a href='http://localhost:${process.env.PORT}/auth/verify/${verificationToken}'>Click here</a>`,
+      });
+      console.log(sendedEmail);
+
       return res.status(201).json({
         _id,
         email,
         avatarURL,
       });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async varificationEmail(req, res, next) {
+    try {
+      const {verificationToken} = req.params;
+      const verifyUser = await userModel.findOne({verificationToken});
+      if (!verifyUser) {
+        return res.status(404).json('User not found');
+      }
+      await userModel.updateOne({verificationToken: null});
+      return res.status(200).send();
     } catch (error) {
       next(error);
     }

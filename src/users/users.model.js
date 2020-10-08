@@ -10,6 +10,7 @@ const userShema = new Schema({
     enum: ['free', 'pro', 'premium'],
     default: 'free',
   },
+  verificationToken: {type: String, required: false},
   token: {type: String, required: false},
 });
 const userModel = mongoose.model('User', userShema);

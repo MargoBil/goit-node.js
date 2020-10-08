@@ -5,6 +5,7 @@ const AvatarGenerator = require('avatar-generator');
 const path = require('path');
 const fs = require('fs');
 require('dotenv').config();
+const {v4: uuidv4} = require('uuid');
 
 async function createNewUser(bodyChunk, costFactor) {
   try {
@@ -12,10 +13,13 @@ async function createNewUser(bodyChunk, costFactor) {
     const passwordHash = await bcryptjs.hash(password, costFactor);
     const avatarFileName = await getUsersAvatar();
     const avatarURL = createAvatarUrl(avatarFileName);
+    const verificationToken = uuidv4();
+
     const newUser = await userModel.create({
       email,
       password: passwordHash,
       avatarURL: avatarURL,
+      verificationToken: verificationToken
     });
     return newUser;
   } catch (error) {
